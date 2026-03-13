@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Enrollment Management</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h3 {
+            color: #555;
+            margin-bottom: 15px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            background-color: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .form-section {
+            background-color: #f9f9f9;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+        input, select {
+            padding: 10px;
+            margin: 8px 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button, .btn {
+            padding: 10px 20px;
+            margin: 8px 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .form-row {
+            margin-bottom: 15px;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+        }
+        .nav-links {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .nav-links a {
+            margin: 0 15px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .nav-links a:hover {
+            background-color: #218838;
+        }
+        .status-registered { color: #007bff; font-weight: bold; }
+        .status-completed { color: #28a745; font-weight: bold; }
+        .status-dropped { color: #dc3545; font-weight: bold; }
+        .grade-display {
+            font-weight: bold;
+            color: #28a745;
+        }
+        .enrollment-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Quản lý đăng ký môn học</h1>
+
+        <div class="nav-links">
+            <a href="/students">Quản lý sinh viên</a>
+            <a href="/subjects">Quản lý môn học</a>
+            <a href="/enrollments">Quản lý đăng ký</a>
+        </div>
+
+        <!-- Form to enroll student -->
+        <div class="form-section">
+            <h3>Đăng ký môn học cho sinh viên</h3>
+            <form th:action="@{/enrollments/enroll}" method="post" class="enrollment-form">
+                <div>
+                    <label for="studentId">Sinh viên:</label>
+                    <select name="studentId" id="studentId" required>
+                        <option value="">Chọn sinh viên</option>
+                        <option th:each="student : ${students}"
+                                th:value="${student.id}"
+                                th:text="${student.name + ' (' + student.email + ')'}">
+                        </option>
+                    </select>
+                </div>
+                <div>
+                    <label for="subjectId">Môn học:</label>
+                    <select name="subjectId" id="subjectId" required>
+                        <option value="">Chọn môn học</option>
+                        <option th:each="subject : ${subjects}"
+                                th:value="${subject.id}"
+                                th:text="${subject.subjectCode + ' - ' + subject.subjectName}">
+                        </option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Đăng ký</button>
+            </form>
+        </div>
+
+        <!-- Enrollment list -->
+        <div class="form-section">
+            <h3>Danh sách đăng ký môn học</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Sinh viên</th>
+                        <th>Mã môn học</th>
+                        <th>Tên môn học</th>
+                        <th>Ngày đăng ký</th>
+                        <th>Trạng thái</th>
+                        <th>Điểm</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="e : ${enrollments}">
+                        <td th:text="${e.id}"></td>
+                        <td th:text="${e.student.name}"></td>
+                        <td th:text="${e.subject.subjectCode}"></td>
+                        <td th:text="${e.subject.subjectName}"></td>
+                        <td th:text="${#temporals.format(e.enrollmentDate, 'dd/MM/yyyy')}"></td>
+                        <td>
+                            <span th:class="'status-' + ${#strings.toLowerCase(e.status)}"
+                                  th:text="${e.status}"></span>
+                        </td>
+                        <td>
+                            <span th:if="${e.grade != null}"
+                                  th:text="${e.grade}"
+                                  class="grade-display"></span>
+                            <span th:if="${e.grade == null}" style="color: #999;">Chưa có điểm</span>
+                        </td>
+                        <td>
+                            <!-- Form cập nhật điểm -->
+                            <form th:action="@{/enrollments/update-grade}" method="post" style="display: inline;">
+                                <input type="hidden" name="enrollmentId" th:value="${e.id}">
+                                <input type="number" name="grade" step="0.1" min="0" max="10"
+                                       th:value="${e.grade}" placeholder="Điểm" style="width: 60px; padding: 2px;">
+                                <select name="status" style="width: 100px; padding: 2px;">
+                                    <option value="REGISTERED" th:selected="${e.status == 'REGISTERED'}">Đã đăng ký</option>
+                                    <option value="COMPLETED" th:selected="${e.status == 'COMPLETED'}">Hoàn thành</option>
+                                    <option value="DROPPED" th:selected="${e.status == 'DROPPED'}">Hủy bỏ</option>
+                                </select>
+                                <button type="submit" class="btn btn-success" style="padding: 4px 8px;">Cập nhật</button>
+                            </form>
+
+                            <a th:href="@{/enrollments/delete/{id}(id=${e.id})}"
+                               onclick="return confirm('Bạn có chắc chắn muốn xóa đăng ký này?')"
+                               class="btn btn-danger">
+                                Xóa
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${enrollments == null or enrollments.isEmpty()}">
+                        <td colspan="8" style="text-align: center; color: #6c757d; padding: 30px;">
+                            Chưa có đăng ký môn học nào trong hệ thống
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Quick stats -->
+        <div class="form-section">
+            <h3>Thống kê nhanh</h3>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; flex: 1; min-width: 200px;">
+                    <strong>Tổng số đăng ký:</strong>
+                    <span th:text="${#lists.size(enrollments)}">0</span>
+                </div>
+                <div style="background: #f3e5f5; padding: 15px; border-radius: 5px; flex: 1; min-width: 200px;">
+                    <strong>Số sinh viên:</strong>
+                    <span th:text="${#lists.size(students)}">0</span>
+                </div>
+                <div style="background: #e8f5e8; padding: 15px; border-radius: 5px; flex: 1; min-width: 200px;">
+                    <strong>Số môn học:</strong>
+                    <span th:text="${#lists.size(subjects)}">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

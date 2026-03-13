@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Subject Management</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h3 {
+            color: #555;
+            margin-bottom: 15px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            background-color: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .form-section {
+            background-color: #f9f9f9;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+        input, select, textarea {
+            padding: 10px;
+            margin: 8px 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        textarea {
+            width: 300px;
+            height: 80px;
+            resize: vertical;
+        }
+        button, .btn {
+            padding: 10px 20px;
+            margin: 8px 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .search-info {
+            color: #28a745;
+            font-weight: bold;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #d4edda;
+            border-radius: 4px;
+        }
+        .no-results {
+            color: #dc3545;
+            font-style: italic;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .form-row {
+            margin-bottom: 15px;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+        }
+        .nav-links {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .nav-links a {
+            margin: 0 15px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .nav-links a:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Quản lý môn học</h1>
+
+        <div class="nav-links">
+            <a href="/students">Quản lý sinh viên</a>
+            <a href="/subjects">Quản lý môn học</a>
+            <a href="/enrollments">Quản lý đăng ký</a>
+        </div>
+
+        <!-- Search Form -->
+        <div class="form-section">
+            <h3>Tìm kiếm môn học</h3>
+            <form th:action="@{/subjects/search}" method="get">
+                <div class="form-row">
+                    <label for="searchType">Loại tìm kiếm:</label>
+                    <select name="searchType" id="searchType" onchange="toggleSearchFields()">
+                        <option value="" th:selected="${searchType == null or searchType == ''}">Tìm kiếm tổng quát</option>
+                        <option value="code" th:selected="${searchType == 'code'}">Theo mã môn học</option>
+                        <option value="name" th:selected="${searchType == 'name'}">Theo tên môn học</option>
+                        <option value="credits" th:selected="${searchType == 'credits'}">Theo số tín chỉ</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div id="keywordField">
+                        <label for="keyword">Từ khóa:</label>
+                        <input type="text" name="keyword" id="keyword" th:value="${keyword}" placeholder="Nhập từ khóa tìm kiếm">
+                    </div>
+
+                    <div id="creditsField" style="display: none;">
+                        <label for="credits">Số tín chỉ:</label>
+                        <input type="number" name="credits" id="credits" th:value="${credits}" placeholder="Nhập số tín chỉ" min="1" max="10">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                <a href="/subjects" class="btn btn-secondary">Xóa bộ lọc</a>
+            </form>
+        </div>
+
+        <!-- Search Results Info -->
+        <div th:if="${searchPerformed}">
+            <div th:if="${subjects != null and !subjects.isEmpty()}" class="search-info">
+                Tìm thấy <span th:text="${subjects.size()}">0</span> kết quả
+                <span th:if="${keyword != null and !keyword.isEmpty()}"> cho từ khóa "<span th:text="${keyword}"></span>"</span>
+                <span th:if="${credits != null}"> với số tín chỉ <span th:text="${credits}"></span></span>
+            </div>
+            <div th:if="${subjects == null or subjects.isEmpty()}" class="no-results">
+                Không tìm thấy môn học nào phù hợp với điều kiện tìm kiếm.
+            </div>
+        </div>
+
+        <!-- Form to add new subject -->
+        <div class="form-section">
+            <h3>Thêm môn học mới</h3>
+            <form th:action="@{/subjects/save}" method="post">
+                <div class="form-row">
+                    <label for="subjectCode">Mã môn học:</label>
+                    <input type="text" name="subjectCode" id="subjectCode" placeholder="Ví dụ: IT001" required>
+                </div>
+                <div class="form-row">
+                    <label for="subjectName">Tên môn học:</label>
+                    <input type="text" name="subjectName" id="subjectName" placeholder="Tên môn học" required>
+                </div>
+                <div class="form-row">
+                    <label for="credits">Số tín chỉ:</label>
+                    <input type="number" name="credits" id="credits" placeholder="Số tín chỉ" required min="1" max="10" value="3">
+                </div>
+                <div class="form-row">
+                    <label for="description">Mô tả:</label>
+                    <textarea name="description" id="description" placeholder="Mô tả môn học"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Thêm môn học</button>
+            </form>
+        </div>
+
+        <!-- Subject list -->
+        <div class="form-section">
+            <h3>Danh sách môn học</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Mã môn học</th>
+                        <th>Tên môn học</th>
+                        <th>Số tín chỉ</th>
+                        <th>Mô tả</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="s : ${subjects}">
+                        <td th:text="${s.id}"></td>
+                        <td th:text="${s.subjectCode}"></td>
+                        <td th:text="${s.subjectName}"></td>
+                        <td th:text="${s.credits}"></td>
+                        <td th:text="${#strings.abbreviate(s.description, 50)}"></td>
+                        <td>
+                            <a th:href="@{/subjects/delete/{id}(id=${s.id})}"
+                               onclick="return confirm('Bạn có chắc chắn muốn xóa môn học này?')"
+                               class="btn btn-danger">
+                                Xóa
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${subjects == null or subjects.isEmpty()}">
+                        <td colspan="6" style="text-align: center; color: #6c757d; padding: 30px;">
+                            <span th:if="${!searchPerformed}">Chưa có môn học nào trong hệ thống</span>
+                            <span th:if="${searchPerformed}">Không có kết quả phù hợp</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function toggleSearchFields() {
+            const searchType = document.getElementById('searchType').value;
+            const keywordField = document.getElementById('keywordField');
+            const creditsField = document.getElementById('creditsField');
+
+            if (searchType === 'credits') {
+                keywordField.style.display = 'none';
+                creditsField.style.display = 'block';
+            } else {
+                keywordField.style.display = 'block';
+                creditsField.style.display = 'none';
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleSearchFields();
+        });
+    </script>
+</body>
+</html>
