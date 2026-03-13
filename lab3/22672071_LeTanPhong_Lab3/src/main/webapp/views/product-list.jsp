@@ -114,6 +114,18 @@
             color: #e74c3c;
             font-weight: bold;
         }
+        .thumbnail {
+            width: 90px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #dfe6e9;
+            display: block;
+        }
+        .thumbnail-fallback {
+            color: #95a5a6;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -157,7 +169,7 @@
                     <th>ID</th>
                     <th>Tên sản phẩm</th>
                     <th>Giá (VNĐ)</th>
-                    <th>URL Hình ảnh</th>
+                    <th>Hình ảnh</th>
                     <th style="text-align: center;">Thao tác</th>
                 </tr>
             </thead>
@@ -170,10 +182,14 @@
                     <td><%= product.getName() %></td>
                     <td class="price"><%= String.format("%,.0f", product.getPrice()) %></td>
                     <td>
-                        <% if (product.getUrlImage() != null && !product.getUrlImage().isEmpty()) { %>
-                            <%= product.getUrlImage().substring(0, Math.min(50, product.getUrlImage().length())) %>...
+                        <% if (product.getUrlImage() != null && !product.getUrlImage().trim().isEmpty()) { %>
+                            <img
+                                src="<%= product.getUrlImage() %>"
+                                alt="<%= product.getName() %>"
+                                class="thumbnail js-thumbnail">
+                            <span class="thumbnail-fallback" style="display:none;">URL ảnh không hợp lệ</span>
                         <% } else { %>
-                            <em style="color: #95a5a6;">Không có</em>
+                            <span class="thumbnail-fallback">Không có ảnh</span>
                         <% } %>
                     </td>
                     <td style="text-align: center;">
@@ -198,5 +214,19 @@
             }
         %>
     </div>
+
+    <script>
+        (function() {
+            var thumbnails = document.querySelectorAll('.js-thumbnail');
+            thumbnails.forEach(function(img) {
+                img.addEventListener('error', function() {
+                    img.style.display = 'none';
+                    if (img.nextElementSibling) {
+                        img.nextElementSibling.style.display = 'inline';
+                    }
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

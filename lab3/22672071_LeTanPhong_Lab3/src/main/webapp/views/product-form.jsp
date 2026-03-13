@@ -100,6 +100,23 @@
             margin-bottom: 20px;
             text-align: center;
         }
+        .preview-wrapper {
+            margin-top: 10px;
+        }
+        .preview-image {
+            width: 140px;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #dfe6e9;
+            display: none;
+        }
+        .preview-note {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #95a5a6;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -155,6 +172,10 @@
                        value="<%= isEdit && product.getUrlImage() != null ? product.getUrlImage() : "" %>"
                        placeholder="https://example.com/image.jpg">
                 <div class="hint">Nhập đường dẫn URL của hình ảnh sản phẩm (không bắt buộc)</div>
+                <div class="preview-wrapper">
+                    <img id="imagePreview" class="preview-image" src="about:blank" alt="Xem trước hình ảnh">
+                    <div id="previewNote" class="preview-note">Không thể tải ảnh từ URL này.</div>
+                </div>
             </div>
 
             <div class="form-actions">
@@ -186,6 +207,42 @@
 
             return true;
         });
+
+        (function() {
+            var urlInput = document.getElementById('url_image');
+            var preview = document.getElementById('imagePreview');
+            var note = document.getElementById('previewNote');
+
+            function resetPreview() {
+                preview.style.display = 'none';
+                note.style.display = 'none';
+                preview.removeAttribute('src');
+            }
+
+            function updatePreview() {
+                var url = urlInput.value.trim();
+                if (!url) {
+                    resetPreview();
+                    return;
+                }
+                note.style.display = 'none';
+                preview.style.display = 'block';
+                preview.src = url;
+            }
+
+            preview.addEventListener('error', function() {
+                preview.style.display = 'none';
+                note.style.display = 'block';
+            });
+
+            preview.addEventListener('load', function() {
+                note.style.display = 'none';
+                preview.style.display = 'block';
+            });
+
+            urlInput.addEventListener('input', updatePreview);
+            updatePreview();
+        })();
     </script>
 </body>
 </html>
