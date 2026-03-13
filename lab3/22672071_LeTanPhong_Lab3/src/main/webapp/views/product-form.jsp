@@ -42,7 +42,8 @@
             font-weight: bold;
         }
         input[type="text"],
-        input[type="number"] {
+        input[type="number"],
+        input[type="file"] {
             width: 100%;
             padding: 12px;
             border: 1px solid #bdc3c7;
@@ -135,7 +136,7 @@
         </div>
         <% } %>
 
-        <form method="post" action="${pageContext.request.contextPath}/<%= isEdit ? "update" : "insert" %>">
+        <form method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/<%= isEdit ? "update" : "insert" %>">
             <% if (isEdit) { %>
             <input type="hidden" name="id" value="<%= product.getId() %>">
             <% } %>
@@ -171,10 +172,16 @@
                        name="urlImage"
                        value="<%= isEdit && product.getUrlImage() != null ? product.getUrlImage() : "" %>"
                        placeholder="https://example.com/image.jpg">
-                <div class="hint">Nhập đường dẫn URL của hình ảnh sản phẩm (không bắt buộc)</div>
+                <div class="hint">Nhập URL ảnh hoặc chọn file từ máy (nếu chọn file thì file sẽ được ưu tiên)</div>
+            </div>
+
+            <div class="form-group">
+                <label for="image_file">Chọn ảnh từ máy</label>
+                <input type="file" id="image_file" name="imageFile" accept="image/*">
+                <div class="hint">Hỗ trợ: JPG, PNG, GIF, WEBP</div>
                 <div class="preview-wrapper">
                     <img id="imagePreview" class="preview-image" src="about:blank" alt="Xem trước hình ảnh">
-                    <div id="previewNote" class="preview-note">Không thể tải ảnh từ URL này.</div>
+                    <div id="previewNote" class="preview-note">Không thể tải hình ảnh đã chọn.</div>
                 </div>
             </div>
 
@@ -210,24 +217,61 @@
 
         (function() {
             var urlInput = document.getElementById('url_image');
+            var fileInput = document.getElementById('image_file');
             var preview = document.getElementById('imagePreview');
             var note = document.getElementById('previewNote');
+            var objectUrl;
+            var contextPath = '<%= request.getContextPath() %>';
+
+            function clearObjectUrl() {
+                if (objectUrl) {
+                    URL.revokeObjectURL(objectUrl);
+                    objectUrl = null;
+                }
+            }
 
             function resetPreview() {
+                clearObjectUrl();
                 preview.style.display = 'none';
                 note.style.display = 'none';
-                preview.removeAttribute('src');
+                preview.src = 'about:blank';
+            }
+
+            function previewFromFile() {
+                var file = fileInput.files && fileInput.files[0];
+                if (!file) {
+                    return false;
+                }
+
+                clearObjectUrl();
+                objectUrl = URL.createObjectURL(file);
+                note.style.display = 'none';
+                preview.style.display = 'block';
+                preview.src = objectUrl;
+                return true;
             }
 
             function updatePreview() {
+                if (previewFromFile()) {
+                    return;
+                }
+
                 var url = urlInput.value.trim();
                 if (!url) {
                     resetPreview();
                     return;
                 }
+
+                var resolvedUrl = url;
+                if (url.indexOf('uploads/') === 0) {
+                    resolvedUrl = contextPath + '/' + url;
+                } else if (url.indexOf('/uploads/') === 0) {
+                    resolvedUrl = contextPath + url;
+                }
+
                 note.style.display = 'none';
                 preview.style.display = 'block';
-                preview.src = url;
+                preview.src = resolvedUrl;
             }
 
             preview.addEventListener('error', function() {
@@ -241,6 +285,7 @@
             });
 
             urlInput.addEventListener('input', updatePreview);
+            fileInput.addEventListener('change', updatePreview);
             updatePreview();
         })();
     </script>

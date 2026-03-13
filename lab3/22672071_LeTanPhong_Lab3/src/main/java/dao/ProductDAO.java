@@ -16,13 +16,44 @@ public class ProductDAO {
      * @return List of all products
      */
     public List<Product> selectAllProducts() {
+        return selectProductsByFilters(null, null, null);
+    }
+
+    /**
+     * Search products by name and optional price range.
+     * @param keyword product name keyword (contains, case-insensitive)
+     * @param minPrice minimum price (nullable)
+     * @param maxPrice maximum price (nullable)
+     * @return filtered products list
+     */
+    public List<Product> selectProductsByFilters(String keyword, Double minPrice, Double maxPrice) {
         List<Product> products = new ArrayList<>();
-        String sql = "SELECT * FROM products";
+        StringBuilder sql = new StringBuilder("SELECT * FROM products WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND LOWER(name) LIKE ?");
+            params.add("%" + keyword.trim().toLowerCase() + "%");
+        }
+        if (minPrice != null) {
+            sql.append(" AND price >= ?");
+            params.add(minPrice);
+        }
+        if (maxPrice != null) {
+            sql.append(" AND price <= ?");
+            params.add(maxPrice);
+        }
+
+        sql.append(" ORDER BY id ASC");
 
         try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
 
+            for (int i = 0; i < params.size(); i++) {
+                pstmt.setObject(i + 1, params.get(i));
+            }
+
+            ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 int id = rs.getInt("id");
                 String name = rs.getString("name");
@@ -32,9 +63,10 @@ public class ProductDAO {
                 Product product = new Product(id, name, price, urlImage);
                 products.add(product);
             }
+            rs.close();
 
         } catch (SQLException e) {
-            System.err.println("Error selecting all products: " + e.getMessage());
+            System.err.println("Error filtering products: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -80,24 +112,22 @@ public class ProductDAO {
      * @return true if insert successful, false otherwise
      */
     public boolean insertProduct(Product product) {
-        String sql = "INSERT INTO products (name, price, url_image) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO products (id, name, price, url_image) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, product.getName());
-            pstmt.setDouble(2, product.getPrice());
-            pstmt.setString(3, product.getUrlImage());
+            int nextId = countProducts() + 1;
+            product.setId(nextId);
+
+            pstmt.setInt(1, product.getId());
+            pstmt.setString(2, product.getName());
+            pstmt.setDouble(3, product.getPrice());
+            pstmt.setString(4, product.getUrlImage());
 
             int affectedRows = pstmt.executeUpdate();
 
             if (affectedRows > 0) {
-                // Get the generated ID and set it to the product object
-                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        product.setId(generatedKeys.getInt(1));
-                    }
-                }
                 return true;
             }
 

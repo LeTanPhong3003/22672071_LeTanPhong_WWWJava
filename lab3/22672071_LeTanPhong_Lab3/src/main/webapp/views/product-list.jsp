@@ -34,6 +34,35 @@
             margin-bottom: 20px;
             text-align: right;
         }
+        .filter-bar {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #ecf0f1;
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: end;
+        }
+        .filter-group {
+            flex: 1;
+            min-width: 180px;
+        }
+        .filter-group label {
+            display: block;
+            font-size: 13px;
+            color: #34495e;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+        .filter-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 14px;
+        }
         .btn {
             display: inline-block;
             padding: 10px 20px;
@@ -66,6 +95,22 @@
         }
         .btn-delete:hover {
             background-color: #c0392b;
+        }
+        .btn-filter {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-filter:hover {
+            background-color: #2980b9;
+        }
+        .btn-reset {
+            background-color: #95a5a6;
+            color: white;
+        }
+        .btn-reset:hover {
+            background-color: #7f8c8d;
         }
         table {
             width: 100%;
@@ -155,6 +200,35 @@
             }
         %>
 
+        <%
+            String keyword = (String) request.getAttribute("keyword");
+            Double minPrice = (Double) request.getAttribute("minPrice");
+            Double maxPrice = (Double) request.getAttribute("maxPrice");
+        %>
+
+        <form class="filter-bar" method="get" action="${pageContext.request.contextPath}/list">
+            <div class="filter-group">
+                <label for="keyword">Tìm theo tên</label>
+                <input type="text" id="keyword" name="keyword"
+                       value="<%= keyword != null ? keyword : "" %>"
+                       placeholder="Nhập tên sản phẩm...">
+            </div>
+            <div class="filter-group">
+                <label for="minPrice">Giá từ (VNĐ)</label>
+                <input type="number" id="minPrice" name="minPrice" min="0" step="1000"
+                       value="<%= minPrice != null ? String.format("%.0f", minPrice) : "" %>">
+            </div>
+            <div class="filter-group">
+                <label for="maxPrice">Đến giá (VNĐ)</label>
+                <input type="number" id="maxPrice" name="maxPrice" min="0" step="1000"
+                       value="<%= maxPrice != null ? String.format("%.0f", maxPrice) : "" %>">
+            </div>
+            <div>
+                <button type="submit" class="btn btn-filter">Lọc</button>
+                <a href="${pageContext.request.contextPath}/list" class="btn btn-reset">Đặt lại</a>
+            </div>
+        </form>
+
         <div class="header-actions">
             <a href="${pageContext.request.contextPath}/new" class="btn btn-add">+ Thêm sản phẩm mới</a>
         </div>
@@ -176,15 +250,27 @@
             <tbody>
                 <%
                     for (Product product : products) {
+                        String imageValue = product.getUrlImage();
+                        String imageSrc = imageValue;
+                        if (imageValue != null) {
+                            String trimmed = imageValue.trim();
+                            if (trimmed.startsWith("uploads/")) {
+                                imageSrc = request.getContextPath() + "/" + trimmed;
+                            } else if (trimmed.startsWith("/uploads/")) {
+                                imageSrc = request.getContextPath() + trimmed;
+                            } else {
+                                imageSrc = trimmed;
+                            }
+                        }
                 %>
                 <tr>
                     <td><%= product.getId() %></td>
                     <td><%= product.getName() %></td>
                     <td class="price"><%= String.format("%,.0f", product.getPrice()) %></td>
                     <td>
-                        <% if (product.getUrlImage() != null && !product.getUrlImage().trim().isEmpty()) { %>
+                        <% if (imageSrc != null && !imageSrc.isEmpty()) { %>
                             <img
-                                src="<%= product.getUrlImage() %>"
+                                src="<%= imageSrc %>"
                                 alt="<%= product.getName() %>"
                                 class="thumbnail js-thumbnail">
                             <span class="thumbnail-fallback" style="display:none;">URL ảnh không hợp lệ</span>
