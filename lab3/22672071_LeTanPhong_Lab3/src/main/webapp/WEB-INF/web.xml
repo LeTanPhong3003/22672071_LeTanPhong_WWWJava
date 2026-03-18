@@ -5,6 +5,12 @@
                              https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          version="6.0">
 
+  <!-- Optional: set a persistent folder outside deployment, ex: D:/shop-uploads -->
+  <context-param>
+    <param-name>uploadDir</param-name>
+    <param-value>C:/shop-uploads</param-value>
+  </context-param>
+
   <!-- Servlet sử dụng @WebServlet annotation -->
   <!-- Không cần config trong web.xml -->
 
