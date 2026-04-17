@@ -1,0 +1,17 @@
+CREATE DATABASE IF NOT EXISTS librarydb;
+USE librarydb;
+
+CREATE TABLE IF NOT EXISTS books (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(255) NOT NULL,
+    author VARCHAR(150) NOT NULL,
+    category VARCHAR(100),
+    publisher VARCHAR(150),
+    published_year INT,
+    quantity INT DEFAULT 0,
+    description TEXT,
+    image_url VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
